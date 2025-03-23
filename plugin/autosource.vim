@@ -12,6 +12,11 @@
 " 
 " THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
+path_separator = "/"
+if vim.fn.has("win32") == 1 or vim.fn.has("win32unix") == 1 then
+  path_separator = "\\"
+end
+
 function! s:EchoWarning(msg)
   echohl WarningMsg
   echo 'Warning'
@@ -68,7 +73,7 @@ function! s:GetAutoSourceHashDir()
     if exists('g:autosource_hashdir')
         let dir = g:autosource_hashdir
     else
-        let dir = $HOME . '/.autosource_hashes'
+        let dir = $HOME . path_separator . '.autosource_hashes'
     endif
 
     if isdirectory(dir)
@@ -85,7 +90,7 @@ endfunction
 
 function! s:GetHashLocation(path)
     let filename_hash = s:HashString(a:path)
-    return s:GetAutoSourceHashDir() . '/' . filename_hash
+    return s:GetAutoSourceHashDir() . path_separator . filename_hash
 endfunction
 
 function! s:HashFile(file)
@@ -110,7 +115,7 @@ endfunction
 
 function! s:SetHash(path)
     let found = 0
-    let filename = split(a:path, '/')[-1]
+    let filename = split(a:path, path_separator)[-1]
     let names = s:GetAutoSourceConfNames()
     for name in names
         if filename == name
@@ -164,9 +169,9 @@ endfunction
 " Source all `.vimrc` files in your pwd and parents up to your home dir
 function! AutoSource(dir)
     let i = 0
-    let crumbs = split(a:dir, '/')
+    let crumbs = split(a:dir, path_separator)
     while i < len(crumbs)
-        let cur = '/' . join(crumbs[0:i], '/')
+        let cur = path_separator . join(crumbs[0:i], path_separator)
         let i += 1
 
         if !s:GetSearchFromRoot() && cur !~ $HOME
@@ -174,7 +179,7 @@ function! AutoSource(dir)
         endif
 
         for fname in s:GetAutoSourceConfNames()
-            let rc = cur . '/' . fname
+            let rc = cur . path_separator. fname
             if filereadable(rc) && s:CheckHash(rc) ==# 1
                 if rc =~? '\M.lua$'
                     if has('nvim')
